@@ -22,33 +22,49 @@ public class Create {
             MongoDatabase sampleTrainingDB = mongoClient.getDatabase("sample_training");
             MongoCollection<Document> gradesCollection = sampleTrainingDB.getCollection("grades");
 
-            insertOneDocument(gradesCollection);
+            int numDocuments = 0;
+            String sDocuments = System.getProperty("mongodb.numDocuments");
+            if (sDocuments == null || sDocuments.length() == 0 || sDocuments.trim().length() == 0)
+            {
+                numDocuments = 1000;
+            }
+            else
+            {
+                numDocuments = Integer.parseInt(sDocuments);
+            }
+
+            for (int i=0; i<numDocuments; i++)
+            {
+                insertOneDocument(gradesCollection, i);
+            }
+            
             insertManyDocuments(gradesCollection);
         }
     }
 
-    private static void insertOneDocument(MongoCollection<Document> gradesCollection) {
-        gradesCollection.insertOne(generateNewGrade(10000d, 1d));
-        System.out.println("One grade inserted for studentId 10000.");
+    private static void insertOneDocument(MongoCollection<Document> gradesCollection, int i) {
+        gradesCollection.insertOne(generateNewGrade(10000d, 1d, i));
+        System.out.printf("[%d] One grade inserted for studentId.\n", i);
     }
 
     private static void insertManyDocuments(MongoCollection<Document> gradesCollection) {
         List<Document> grades = new ArrayList<>();
         for (double classId = 1d; classId <= 10d; classId++) {
-            grades.add(generateNewGrade(10001d, classId));
+            grades.add(generateNewGrade(10001d, classId, 0));
         }
 
         gradesCollection.insertMany(grades, new InsertManyOptions().ordered(false));
         System.out.println("Ten grades inserted for studentId 10001.");
     }
 
-    private static Document generateNewGrade(double studentId, double classId) {
+    private static Document generateNewGrade(double studentId, double classId, int recordId) {
         List<Document> scores = List.of(new Document("type", "exam").append("score", rand.nextDouble() * 100),
                                         new Document("type", "quiz").append("score", rand.nextDouble() * 100),
                                         new Document("type", "homework").append("score", rand.nextDouble() * 100),
                                         new Document("type", "homework").append("score", rand.nextDouble() * 100));
         return new Document("_id", new ObjectId()).append("student_id", studentId)
                                                   .append("class_id", classId)
-                                                  .append("scores", scores);
+                                                  .append("scores", scores)
+                                                  .append("recordId", recordId);
     }
 }
